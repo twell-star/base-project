@@ -5,14 +5,12 @@ region;param;value
 Казань;avg_check;3500
 Казань;marketing;15000
 Казань;other_costs;7000
-
 Екатеринбург;area_sqm;40
 Екатеринбург;teachers;2
 Екатеринбург;salary_per_teacher;41000
 Екатеринбург;avg_check;3700
 Екатеринбург;marketing;18000
 Екатеринбург;other_costs;8000
-
 Краснодар;area_sqm;40
 Краснодар;teachers;2
 Краснодар;salary_per_teacher;34000
