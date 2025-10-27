@@ -1,3 +1,5 @@
+import csv
+
 def load_regions(filename='regions.csv'):
     """
     Загружает демографические данные по регионам из CSV-файла.
@@ -16,28 +18,21 @@ def load_regions(filename='regions.csv'):
     regions_data = {}
     
     with open(filename, "r", encoding="utf-8") as file:
-        lines = file.readlines()
-    
-    # Пропускаем заголовок
-    for line in lines[1:]:
-        if not line.strip():
-            continue  # пропустить пустые строки
+        # Указываем delimiter=';', так как используется точка с запятой
+        reader = csv.DictReader(file, delimiter=";")
         
-        parts = line.strip().split(";")
-        if len(parts) < 3:
-            continue  # некорректная строка
-        
-        region = parts[0]
-        try:
-            children = int(parts[1])
-            rent = int(parts[2])
-        except ValueError:
-            continue  # пропустить строки с некорректными числами
-        
-        regions_data[region] = {
-            "children_5_7": children,
-            "avg_rent_per_sqm": rent
-        }
+        for row in reader:
+            try:
+                region = row["region"]
+                children = int(row["children_5_7"])
+                rent = int(row["avg_rent_per_sqm"])
+                regions_data[region] = {
+                    "children_5_7": children,
+                    "avg_rent_per_sqm": rent
+                }
+            except (KeyError, ValueError, TypeError):
+                # Пропускаем строки с отсутствующими колонками или некорректными значениями
+                continue
     
     return regions_data
 
