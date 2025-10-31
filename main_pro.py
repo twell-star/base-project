@@ -1,19 +1,26 @@
 import csv
 
 def load_regions(filename='regions.csv'):
-    """
-    Загружает демографические данные по регионам из CSV-файла.
+    """Загружает демографические данные по регионам из CSV-файла.
     
     Формат файла:
-    region;children_5_7;avg_rent_per_sqm
-    Казань;41800;1050
-    ...
-    
-    Возвращает словарь вида:
-    {
-        "Казань": {"children_5_7": 41800, "avg_rent_per_sqm": 1050},
+        region;children_5_7;avg_rent_per_sqm
+        Казань;41800;1050
         ...
-    }
+        
+    Args:
+        filename (str, optional): Путь к CSV-файлу с данными. По умолчанию 'regions.csv'.
+        
+    Returns:
+        dict: Словарь вида:
+            {
+                "Казань": {"children_5_7": 41800, "avg_rent_per_sqm": 1050},
+                ...
+            }
+            
+    Исключения:
+        FileNotFoundError: Если файл не найден.
+        KeyError, ValueError, TypeError: При некорректных данных в файле.
     """
     regions_data = {} # Словарь для хранения данных по регионам
     
@@ -37,19 +44,26 @@ def load_regions(filename='regions.csv'):
     return regions_data
 
 def load_businesses(filename='businesses.csv'):
-    """
-    Загружает данные о бизнесах из CSV-файла.
+    """Загружает данные о бизнесах из CSV-файла.
     
     Формат файла:
-    region;okved;ip_count
-    Казань;85.59;376
-    ...
-    
-    Возвращает словарь вида:
-    {
-        "Казань": {"ip_count": 376},
+        region;ip_count
+        Казань;376
         ...
-    }
+        
+    Args:
+        filename (str, optional): Путь к CSV-файлу с данными. По умолчанию 'businesses.csv'.
+        
+    Returns:
+        dict: Словарь, где ключи - названия регионов, значения - словари с данными:
+            {
+                "Казань": {"ip_count": 376},
+                ...
+            }
+            
+    Исключения:
+        FileNotFoundError: Если файл не найден.
+        KeyError, ValueError, TypeError: При некорректных данных в файле.
     """
     businesses_data = {} # Словарь для хранения данных о бизнесов по регионам и ОКВЕД
     
@@ -71,19 +85,26 @@ def load_businesses(filename='businesses.csv'):
     return businesses_data                  
 
 def load_assumptions(filename='assumptions.csv'):
-    """
-    Загружает данные о предположениях из CSV-файла.
+    """Загружает данные о предположениях из CSV-файла.
     
     Формат файла:
-    region;param;value
-    Казань;area_sqm;40
-    ...
-    
-    Возвращает словарь вида:
-    {
-        "Казань": {"area_sqm": 40, "teachers": 2, ...},
+        region;param;value
+        Казань;area_sqm;40
         ...
-    }
+        
+    Args:
+        filename (str, optional): Путь к CSV-файлу с данными. По умолчанию 'assumptions.csv'.
+        
+    Returns:
+        dict: Словарь, где ключи - названия регионов, значения - словари с параметрами:
+            {
+                "Казань": {"area_sqm": 40, "param_name": value, ...},
+                ...
+            }
+            
+    Исключения:
+        FileNotFoundError: Если файл не найден.
+        KeyError, ValueError, TypeError: При некорректных данных в файле.
     """
     assumptions_data = {} # Словарь для хранения данных о предположениях по регионам
 
@@ -107,6 +128,71 @@ def load_assumptions(filename='assumptions.csv'):
 
     return assumptions_data 
 
+def select_regions(regions_dict):
+    """Позволяет пользователю выбрать регионы для анализа через интерактивное меню.
+    
+    Функция выводит список всех доступных регионов и предлагает выбрать режим анализа:
+    - S: Анализ одного региона
+    - D: Сравнение двух регионов
+    - A: Анализ всех регионов
+    
+    Args:
+        regions_dict (dict): Словарь с данными по регионам в формате:
+            {
+                "Казань": {"children_5_7": 41800, "avg_rent_per_sqm": 1050},
+                ...
+            }
+            
+    Returns:
+        list: Список выбранных регионов для анализа.
+        
+    Raises:
+        SystemExit: Если пользователь сделал некорректный выбор.
+    """
+    regions_list = sorted(regions_dict.keys()) # Список всех регионов
+    selected_regions = [] # Список для хранения выбранных регионов
+    print('\nДля дальнейшего анализа можно выбрать следующие регионы:')
+    for index, region in enumerate(regions_list, 1):
+        print(f'{index}. {region}')
+    print(f'Всего в списке {len(regions_list)} регионов.\n')
+    print('Введите код режима анализа:')
+    print('S - Анализ одного региона')
+    print('D - Сравнение двух регионов')
+    print('A - Анализ всех регионов')
+    mode = input('Введите код режима: ')
+    match mode:
+        case 'S':
+            choise_region = int(input('Введите номер региона: '))
+            if choise_region in range(1, len(regions_list)+1):
+                selected_regions.append(regions_list[choise_region-1])
+                print(f'\nВы выбрали для анализа {selected_regions[0]}')
+                return selected_regions
+            else:
+                print('\nНеверный выбор. Запустите программу снова.')
+                exit()
+        case 'D':
+            choise_region1 = int(input('Введите номер первого региона: '))
+            choise_region2 = int(input('Введите номер второго региона: '))
+            if choise_region1 in range(1, len(regions_list)+1) and\
+            choise_region2 in range(1, len(regions_list)+1) and\
+            choise_region1 != choise_region2:
+                selected_regions.append(regions_list[choise_region1-1])
+                selected_regions.append(regions_list[choise_region2-1])
+                print(f'\nВы выбрали для сравнительного анализа {selected_regions[0]} и {selected_regions[1]}')
+                return selected_regions
+            else:
+                print('\nНеверный выбор. Запустите программу снова.')
+                exit()
+        case 'A':
+            selected_regions = regions_list
+            print(f'\nВы выбрали для анализа все регионы')
+            return selected_regions
+        case _:
+            print('\nНеверный выбор. Запустите программу снова.')
+            exit()
+    
 print(load_regions())    
 print(load_businesses())
 print(load_assumptions())
+selected_regions = sorted(select_regions(load_regions()))
+print(selected_regions)
