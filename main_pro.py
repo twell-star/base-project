@@ -151,45 +151,57 @@ def select_regions(regions_dict):
     """
     regions_list = sorted(regions_dict.keys()) # Список всех регионов
     selected_regions = [] # Список для хранения выбранных регионов
+    
+    # Выводим список всех доступных регионов
     print('\nДля дальнейшего анализа можно выбрать следующие регионы:')
     for index, region in enumerate(regions_list, 1):
         print(f'{index}. {region}')
     print(f'Всего в списке {len(regions_list)} регионов.\n')
+    
+    # Предлагаем пользователю выбрать режим анализа
     print('Введите код режима анализа:')
     print('S - Анализ одного региона')
     print('D - Сравнение двух регионов')
     print('A - Анализ всех регионов')
-    mode = input('Введите код режима: ')
-    match mode:
-        case 'S':
-            choise_region = int(input('Введите номер региона: '))
-            if choise_region in range(1, len(regions_list)+1):
-                selected_regions.append(regions_list[choise_region-1])
-                print(f'\nВы выбрали для анализа {selected_regions[0]}')
+    
+    # Основной цикл обработки выбора режима анализа
+    while True:
+        mode = input('Введите код режима: ')
+        match mode:
+            # Обработка выбора одного региона
+            case 'S' | 's':
+                while True:
+                    choise_region = int(input('Введите номер региона: '))
+                    # Проверяем, что номер региона в допустимом диапазоне
+                    if choise_region in range(1, len(regions_list)+1):
+                        selected_regions.append(regions_list[choise_region-1])
+                        print(f'\nВы выбрали для анализа {selected_regions[0]}')
+                        return selected_regions
+                    else:
+                        print('\nНеверно. Повторите выбор региона.\n')
+            # Обработка выбора двух регионов для сравнения
+            case 'D' | 'd':
+                while True:
+                    choise_region1 = int(input('Введите номер первого региона: '))
+                    choise_region2 = int(input('Введите номер второго региона: '))
+                    # Проверяем, что оба номера регионов в допустимом диапазоне и не равны друг другу
+                    if choise_region1 in range(1, len(regions_list)+1) and\
+                    choise_region2 in range(1, len(regions_list)+1) and\
+                    choise_region1 != choise_region2:
+                        selected_regions.append(regions_list[choise_region1-1])
+                        selected_regions.append(regions_list[choise_region2-1])
+                        print(f'\nВы выбрали для сравнительного анализа {selected_regions[0]} и {selected_regions[1]}')
+                        return selected_regions
+                    else:
+                        print('\nНеверно. Повторите выбор регионов.\n')
+            # Обработка выбора всех регионов
+            case 'A' | 'a':
+                selected_regions = regions_list
+                print(f'\nВы выбрали для анализа все регионы')
                 return selected_regions
-            else:
-                print('\nНеверный выбор. Запустите программу снова.')
-                exit()
-        case 'D':
-            choise_region1 = int(input('Введите номер первого региона: '))
-            choise_region2 = int(input('Введите номер второго региона: '))
-            if choise_region1 in range(1, len(regions_list)+1) and\
-            choise_region2 in range(1, len(regions_list)+1) and\
-            choise_region1 != choise_region2:
-                selected_regions.append(regions_list[choise_region1-1])
-                selected_regions.append(regions_list[choise_region2-1])
-                print(f'\nВы выбрали для сравнительного анализа {selected_regions[0]} и {selected_regions[1]}')
-                return selected_regions
-            else:
-                print('\nНеверный выбор. Запустите программу снова.')
-                exit()
-        case 'A':
-            selected_regions = regions_list
-            print(f'\nВы выбрали для анализа все регионы')
-            return selected_regions
-        case _:
-            print('\nНеверный выбор. Запустите программу снова.')
-            exit()
+            # Обработка некорректного ввода
+            case _:
+                print('\nНеверно. Повторите выбор режима.\n')
     
 print(load_regions())    
 print(load_businesses())
