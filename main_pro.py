@@ -267,6 +267,8 @@ def calculate_financials(region, reg_data, bus_data, ass_data):
 
     return {
         'region': region,
+        'children_5_7': reg_data['children_5_7'],
+        'ip_count': bus_data['ip_count'],
         'total_costs': total_costs,
         'monthly_revenue': monthly_revenue,
         'profit': profit,
@@ -278,6 +280,75 @@ def calculate_financials(region, reg_data, bus_data, ass_data):
         'payback_period_month': payback_period_month
     }    
     
+def generate_single_report(result):
+    """
+    Генерирует текстовый отчёт для одного региона.
+    
+    Args:
+        result (dict): Результат функции calculate_financials для одного региона.
+        
+    Returns:
+        str: Готовый к сохранению текст отчёта.
+    """
+    region = result['region']
+    
+    # Форматирование денежных сумм с пробелами (например, 155000 → "155 000")
+    def format_currency(amount: int) -> str:
+        return f'{amount:,}'.replace(',', ' ')
+    
+    # Определение текстовой метки для рентабельности
+    profitability_labels = {
+        'low': 'низкий',
+        'regular': 'обычный',
+        'high': 'высокий'
+    }
+    profit_label = profitability_labels.get(result['profitability_level'], 'неизвестный')
+    
+    # Определение текстовой метки для конкуренции
+    competition_labels = {
+        'low': 'низкий',
+        'medium': 'умеренный',
+        'high': 'высокий'
+    }
+    comp_label = competition_labels.get(result['competition_level'], 'неизвестный')
+    
+    # Формирование отчёта
+    report = f"""АНАЛИЗ ФИНАНСОВОЙ ЭФФЕКТИВНОСТИ
+Детский центр развития в г. {region}
+
+📊 ОСНОВНЫЕ ПОКАЗАТЕЛИ:
+• Месячная выручка (60 детей):     {format_currency(result['monthly_revenue'])} ₽
+• Месячные расходы:                {format_currency(result['total_costs'])} ₽
+• Чистая прибыль:                   {format_currency(result['profit'])} ₽
+• Рентабельность:                   {result['profitability']}% ({profit_label} уровень)
+• Точка безубыточности:             {result['break_even_children']} детей в месяц
+
+📈 РЫНОК И КОНКУРЕНЦИЯ:
+• Детей 5–7 лет в городе:           {format_currency(int(result.get('children_5_7', 0)))} чел.
+• Действующих ИП (ОКВЭД 85.59):     {result.get('ip_count', '—')}
+• Конкуренция:                      {result['competition_density']} ИП на 1000 детей ({comp_label} уровень)
+
+💰 ИНВЕСТИЦИИ:
+• Начальные вложения:               500 000 ₽
+• Срок окупаемости:                 {result['payback_period_month']} месяцев
+
+РЕКОМЕНДАЦИЯ:
+"""
+    
+    # Динамическая рекомендация
+    if result['profit'] <= 0:
+        recommendation = 'Бизнес убыточен при текущих параметрах. Запуск не рекомендуется без пересмотра модели (снижение расходов или рост среднего чека).'
+    elif result['profitability_level'] == 'high' and result['competition_level'] == 'low':
+        recommendation = 'Бизнес обладает высокой рентабельностью и низкой конкуренцией. Рекомендуется к запуску.'
+    elif result['competition_level'] == 'high':
+        recommendation = 'Рынок перенасыщен. Запуск возможен только при сильном УТП (уникальное предложение) и эффективном маркетинге.'
+    else:
+        recommendation = f'Бизнес рентабелен и имеет {profit_label} уровень эффективности. ' \
+                         f'Рекомендуется к запуску при условии набора минимум {result['break_even_children']} детей в месяц.'
+    
+    report += recommendation
+    return report
+
 #  загружаем данные
 regions_dict = load_regions()   # о регионах
 print(regions_dict)   # контрольный код (потом удалить)
@@ -298,3 +369,18 @@ for region in selected_regions:
     assumptions_data = assumptions_dict[region]
     results[region] = calculate_financials(region, regions_data, businesses_data, assumptions_data)
 print(results)   # контрольный код (потом удалить)
+
+if len(selected_regions) == 1:
+    report = generate_single_report(results[selected_regions[0]])
+    filename = f'report_single_{selected_regions[0]}.txt'
+# elif len(selected_regions) == 2:
+#     report = generate_comparison_report([results[r] for r in selected_regions])
+#     filename = f'report_compare_{selected_regions[0]}_{selected_regions[1]}.txt'
+# else:
+#     report = generate_overview_report(list(results.values()))
+#     filename = 'report_overview_all.txt'
+
+with open(filename, 'w', encoding='utf-8') as f:
+    f.write(report)
+print(f'Отчёт сохранён: {filename}/')
+      
