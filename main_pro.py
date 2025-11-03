@@ -211,72 +211,90 @@ def select_regions(regions_dict):
             case _:
                 print('\nНеверно. Повторите выбор режима.\n')
 
-def calculate_financials(region, regions=None, businesses=None, assumptions=None):
+def calculate_financials(region, reg_data, bus_data, ass_data):
     """
     Вычисляет финансовые показатели для региона.
     
     Args:
         region (str): Название региона.
-        regions (dict, optional): Словарь с данными о регионах. По умолчанию None.
-        businesses (dict, optional): Словарь с бизнес-показателями для регионов. По умолчанию None.
-        assumptions (dict, optional): Словарь с предположениями для регионов. По умолчанию None.
+        reg_data (dict): Словарь с данными о регионе.
+        bus_data (dict): Словарь с бизнес-показателями для региона.
+        ass_data (dict): Словарь с предположениями для региона.
         
     Returns:
         dict: Словарь с финансовыми показателями для региона.
         
     Исключения:
-        KeyError: Если в словарях regions, businesses или assumptions отсутствуют необходимые ключи.
-        TypeError: Если типы данных в словарях regions, businesses или assumptions некорректны.
+        KeyError: Если в словарях reg_data, bus_data или ass_data отсутствуют необходимые ключи.
+        TypeError: Если типы данных в словарях reg_data, bus_data или ass_data некорректны.
         ZeroDivisionError: При делении на ноль при расчете плотности конкуренции.
     """
-    if regions is None:
-        regions = load_regions()[region]
-    if businesses is None:
-        businesses = load_businesses()[region]
-    if assumptions is None:
-        assumptions = load_assumptions()[region]
-    financials = {}
-    rent = regions['avg_rent_per_sqm'] * assumptions['area_sqm']   # расходы на аренду (ежемесячные)
-    salaries = assumptions['teachers'] * assumptions['salary_per_teacher']   # зарплата персонала центра
+    
+    rent = reg_data['avg_rent_per_sqm'] * ass_data['area_sqm']   # расходы на аренду (ежемесячные)
+    salaries = ass_data['teachers'] * ass_data['salary_per_teacher']   # зарплата персонала центра
+    
     monthly_sales_volume = 60   # объем продаж в месяц (базовый сценарий)
     initial_investment = 500000   # начальные инвестиции в бизнес
-    financials['region'] = region
-    financials['total_costs'] = rent + salaries + assumptions['marketing'] + assumptions['other_costs']   # общие месячные затраты
-    financials['monthly_revenue'] = assumptions['avg_check'] * monthly_sales_volume   # месячная выручка
-    financials['profit'] = financials['monthly_revenue'] - financials['total_costs']   # чистая прибыль в месяц
-    financials['profitability'] = round((financials['profit'] / financials['monthly_revenue']) * 100, 1)   # рентабельность
-    match financials['profitability']:
-        case x if x <= 10:
-            financials['profitability_level'] = 'low'   # низкий уровень рентабельности
-        case x if x <= 25:
-            financials['profitability_level'] = 'regular'   # обычный уровень рентабельности
-        case x if x > 25:
-            financials['profitability_level'] = 'high'   # высокий уровень рентабельности
-    financials['break_even_children'] = math.ceil(financials['total_costs'] / assumptions['avg_check'])   # точка безубыточности
-    financials['competition_density'] = round(businesses['ip_count'] / (regions['children_5_7'] / 1000), 1)   # плотность конкуренции
-    match financials['competition_density']:
-        case x if x <= 8:
-            financials['competition_level'] = 'low'   # низкий уровень конкуренции
-        case x if x <= 12:
-            financials['competition_level'] = 'medium'   # умеренный уровень конкуренции
-        case x if x > 12:
-            financials['competition_level'] = 'high'   # высокий уровень конкуренции
-    if financials['profit'] > 0:
-        financials['payback_period_month'] = math.ceil(initial_investment / financials['profit'])   # срок окупаемости в полных месяцах
-    else:
-        financials['payback_period_month'] = 'no payback'
-
-    return financials
     
-regions_data = load_regions()
-print(regions_data)
-businesses_data = load_businesses()
-print(businesses_data)
-assumptions_data = load_assumptions()
-print(assumptions_data)
-selected_regions = sorted(select_regions(load_regions()))
-print(selected_regions)
-result = {}
+    total_costs = rent + salaries + ass_data['marketing'] + ass_data['other_costs']   # общие месячные затраты
+    monthly_revenue = ass_data['avg_check'] * monthly_sales_volume   # месячная выручка
+    profit = monthly_revenue - total_costs   # чистая прибыль в месяц
+    profitability = round((profit / monthly_revenue) * 100, 1)   # рентабельность
+    
+    match profitability:
+        case x if x <= 10:
+            profitability_level = 'low'   # низкий уровень рентабельности
+        case x if x <= 25:
+            profitability_level = 'regular'   # обычный уровень рентабельности
+        case x if x > 25:
+            profitability_level = 'high'   # высокий уровень рентабельности
+    
+    break_even_children = math.ceil(total_costs / ass_data['avg_check'])   # точка безубыточности
+    competition_density = round(bus_data['ip_count'] / (reg_data['children_5_7'] / 1000), 1)   # плотность конкуренции
+    
+    match competition_density:
+        case x if x <= 8:
+            competition_level = 'low'   # низкий уровень конкуренции
+        case x if x <= 12:
+            competition_level = 'medium'   # умеренный уровень конкуренции
+        case x if x > 12:
+            competition_level = 'high'   # высокий уровень конкуренции
+    
+    if profit > 0:
+        payback_period_month = math.ceil(initial_investment / profit)   # срок окупаемости в полных месяцах
+    else:
+        payback_period_month = 'no payback'
+
+    return {
+        'region': region,
+        'total_costs': total_costs,
+        'monthly_revenue': monthly_revenue,
+        'profit': profit,
+        'profitability': profitability,
+        'profitability_level': profitability_level,
+        'break_even_children': break_even_children,
+        'competition_density': competition_density,
+        'competition_level': competition_level,
+        'payback_period_month': payback_period_month
+    }    
+    
+#  загружаем данные
+regions_dict = load_regions()   # о регионах
+print(regions_dict)   # контрольный код (потом удалить)
+businesses_dict = load_businesses()   # о бизнесах
+print(businesses_dict)   # контрольный код (потом удалить)
+assumptions_dict = load_assumptions()   # о предположениях
+print(assumptions_dict)   # контрольный код (потом удалить)
+
+#  выбираем регионы для расчета
+selected_regions = sorted(select_regions(regions_dict))
+print(selected_regions)   # контрольный код (потом удалить)
+
+#  расчет финансовых показателей для каждого выбранного региона
+results = {}
 for region in selected_regions:
-    result[region] = calculate_financials(region)
-print(result)
+    regions_data = regions_dict[region]
+    businesses_data = businesses_dict[region]
+    assumptions_data = assumptions_dict[region]
+    results[region] = calculate_financials(region, regions_data, businesses_data, assumptions_data)
+print(results)   # контрольный код (потом удалить)
