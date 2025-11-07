@@ -1,6 +1,7 @@
 def print_fancy_table(headers, rows, currency_columns=None):
     """
     Выводит таблицу с форматированием.
+    Проверка различия версий
     
     Args:
         headers (list): Заголовки столбцов
