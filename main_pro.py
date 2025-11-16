@@ -595,7 +595,7 @@ def generate_comparison_report(financials_list):
 
 {table_output}
 АНАЛИТИЧЕСКИЙ ВЫВОД:
-• {advantage}
+{advantage}
 
 РЕКОМЕНДАЦИЯ:
 {recommendation}
